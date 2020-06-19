@@ -1,23 +1,21 @@
 use clap::{Arg, App, ArgMatches};
-use std::path::PathBuf;
+use log::LevelFilter;
 use std::sync::{Arc, RwLock};
-use std::convert::Into;
 
 mod core;
 mod endpoint;
 use self::core::ConfigCore;
 use endpoint::Endpoint;
 
-pub struct Config<'t> {
-    args: ArgMatches<'t>,
+pub struct Config {
     core: RwLock<ConfigCore>
 }
 
-pub type SharedConfig<'t> = Arc<Config<'t>>;
+pub type SharedConfig = Arc<Config>;
 
-impl <'t> Config<'t> {
+impl Config{
 
-    pub fn new() -> SharedConfig<'t> {
+    pub fn new() -> SharedConfig {
         let args = init_args();
         let pathname = args.value_of("config").unwrap_or("banshee.ini");
         // init from file
@@ -26,7 +24,6 @@ impl <'t> Config<'t> {
         // todo ...
         // ready
         Arc::<Config>::new(Config {
-            args: args,
             core: RwLock::new(inst)
         })
     }
@@ -36,6 +33,15 @@ impl <'t> Config<'t> {
         c.peers().clone()
     }
 
+    pub fn log_lvl_console(&self) -> LevelFilter {
+        // todo: obtain value from config file
+        LevelFilter::Info
+    }
+
+    pub fn log_lvl_file(&self) -> LevelFilter {
+        // todo: obtain value from config file
+        LevelFilter::Debug
+    }
 }
 
 // command line

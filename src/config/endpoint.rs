@@ -15,11 +15,11 @@ impl Endpoint {
         }
     }
 
-    pub fn addr(&self) -> &str {
+    fn addr(&self) -> &str {
         &self.addr
     }
 
-    pub fn port(&self) -> u16 {
+    fn port(&self) -> u16 {
         self.port
     }
 }
@@ -27,7 +27,7 @@ impl Endpoint {
 impl Display for Endpoint {
 
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(f, "{}:{}", self.addr, self.port)
+        write!(f, "{}:{}", self.addr(), self.port())
     }
 
 }
