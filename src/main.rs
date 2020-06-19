@@ -5,9 +5,10 @@ use config::Config;
 
 #[tokio::main]
 async fn main() {
-    // config
+    // get config
     let cfg_inst = Config::new();
-    // instantiate
+
+    // instantiate, now simply print target peers to connect to
     let peers = cfg_inst.peers();
     for p in peers {
         println!("Connect to {}", p);
