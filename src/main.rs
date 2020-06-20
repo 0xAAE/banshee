@@ -7,13 +7,10 @@ mod output;
 mod config;
 use config::Config;
 
-use log::info;
 use signal_hook::{iterator::Signals, SIGINT};
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::thread;
-use std::time;
 
 type StopFlag = Arc<AtomicBool>;
 
@@ -53,3 +50,4 @@ async fn main() {
 
     println!("Banshee has started");
 }
+
