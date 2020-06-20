@@ -1,31 +1,35 @@
 use crate::config::SharedConfig;
-use crate::StopFlag;
+use crate::data::{Fragment, Session};
 
-use log::info;
+use log::{info, error};
+use tokio::sync::mpsc::{Sender, Receiver};
 
-use std::sync::atomic::Ordering;
-use std::thread;
-use std::time;
-
-// timeout to wait fragments from input
-const TIMEOUT_WAIT_FRAGMENT_SEC: u64 = 1;
-
-pub async fn run(_cfg: SharedConfig, stop_flag: StopFlag) {
+pub async fn run(_cfg: SharedConfig, mut rx_frag: Receiver<Fragment>, _tx_sess: Sender<Session>) {
     info!("start collector");
 
     tokio::spawn(async move {
 
         loop {
-            if stop_flag.load(Ordering::SeqCst) {
-                info!("stop collector");
-                break;
+            match rx_frag.recv().await {
+                None => {
+                    error!("fragments input channel is broken");
+                    break;
+                },
+                Some(f) => {
+                    match f {
+                        Fragment::Stop => {
+                            info!("stop collector");
+                            break;
+                        },
+                        _ => {
+                            //todo: handle fragment
+                            info!("collector: handling fragments is not implemented yet");
+                        }
+                    }                    
+                }
             }
-    
-            // imitate trying to receive fragments from input:
-            thread::sleep(time::Duration::from_secs(TIMEOUT_WAIT_FRAGMENT_SEC));
-    
-            info!("collector: receiving fragments is not implemented yet");
         }    
+        info!("collector is stopped");
 
     });
 }

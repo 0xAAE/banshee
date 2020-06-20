@@ -1,31 +1,35 @@
 use crate::config::SharedConfig;
-use crate::StopFlag;
+use crate::data::{FinalSample, StoredResult};
 
-use log::info;
+use log::{info, error};
+use tokio::sync::mpsc::{Sender, Receiver};
 
-use std::sync::atomic::Ordering;
-use std::thread;
-use std::time;
-
-// timeout to wait processed session from processor
-const TIMEOUT_WAIT_PROCESSED_SEC: u64 = 1;
-
-pub async fn run(_cfg: SharedConfig, stop_flag: StopFlag) {
+pub async fn run(_cfg: SharedConfig, mut rx_smpl: Receiver<FinalSample>, _tx_rslt: Sender<StoredResult>) {
     info!("start inference");
 
     tokio::spawn(async move {
 
         loop {
-            if stop_flag.load(Ordering::SeqCst) {
-                info!("stop inference");
-                break;
+            match rx_smpl.recv().await {
+                None => {
+                    error!("final samples input channel is broken");
+                    break;
+                },
+                Some(f) => {
+                    match f {
+                        FinalSample::Stop => {
+                            info!("stop inference");
+                            break;
+                        },
+                        _ => {
+                            //todo: handle sample
+                            info!("inference: handling samples is not implemented yet");
+                        }
+                    }                    
+                }
             }
-    
-            // imitate trying to receive processed sessions them:
-            thread::sleep(time::Duration::from_secs(TIMEOUT_WAIT_PROCESSED_SEC));
-    
-            info!("inference: receiving processed data is not implemented yet");    
-        }
-    
+        }    
+        info!("inference is stopped");
+
     });
 }

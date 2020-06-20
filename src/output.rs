@@ -1,29 +1,35 @@
 use crate::config::SharedConfig;
-use crate::StopFlag;
+use crate::data::StoredResult;
 
-use log::info;
+use log::{error, info};
+use tokio::sync::mpsc::{Sender, Receiver};
 
-use std::sync::atomic::Ordering;
-use std::thread;
-use std::time;
-
-// timeout to wait result from inference to send to storage
-const TIMEOUT_WAIT_RESULT_SEC: u64 = 1;
-
-pub async fn run(_cfg: SharedConfig, stop_flag: StopFlag) {
+pub async fn run(_cfg: SharedConfig, mut rx_rslt: Receiver<StoredResult>) {
     info!("start output");
 
     tokio::spawn(async move {
+
         loop {
-            if stop_flag.load(Ordering::SeqCst) {
-                info!("stop output");
-                break;
+            match rx_rslt.recv().await {
+                None => {
+                    error!("stored result input channel is broken");
+                    break;
+                },
+                Some(f) => {
+                    match f {
+                        StoredResult::Stop => {
+                            info!("stop output");
+                            break;
+                        },
+                        _ => {
+                            //todo: handle stored result
+                            info!("output: handling results is not implemented yet");
+                        }
+                    }                    
+                }
             }
-    
-            // imitate trying to receive fragments:
-            thread::sleep(time::Duration::from_secs(TIMEOUT_WAIT_RESULT_SEC));
-    
-            info!("output: receiving inferred data is not implemented yet");
-        }     
+        }    
+        info!("output is stopped");
+
     });
 }

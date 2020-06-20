@@ -1,31 +1,35 @@
 use crate::config::SharedConfig;
-use crate::StopFlag;
+use crate::data::{Session, FinalSample};
 
-use log::info;
+use log::{info, error};
+use tokio::sync::mpsc::{Sender, Receiver};
 
-use std::sync::atomic::Ordering;
-use std::thread;
-use std::time;
-
-// timeout to wait session from collector
-const TIMEOUT_WAIT_SESSION_SEC: u64 = 2;
-
-pub async fn run(_cfg: SharedConfig, stop_flag: StopFlag) {
+pub async fn run(_cfg: SharedConfig, mut rx_sess: Receiver<Session>, _tx_smpl: Sender<FinalSample>) {
     info!("start processor");
 
     tokio::spawn(async move {
 
         loop {
-            if stop_flag.load(Ordering::SeqCst) {
-                info!("stop processor");
-                break;
+            match rx_sess.recv().await {
+                None => {
+                    error!("sessions input channel is broken");
+                    break;
+                },
+                Some(f) => {
+                    match f {
+                        Session::Stop => {
+                            info!("stop processor");
+                            break;
+                        },
+                        _ => {
+                            //todo: handle session
+                            info!("processor: handling sessions is not implemented yet");
+                        }
+                    }                    
+                }
             }
-    
-            // imitate trying to receive fragments:
-            thread::sleep(time::Duration::from_secs(TIMEOUT_WAIT_SESSION_SEC));
-    
-            info!("processor: receiving sessions is not implemented yet");    
-        }
+        }    
+        info!("processor is stopped");
     
     });
 }
