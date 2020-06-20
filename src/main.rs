@@ -1,9 +1,21 @@
-use tokio::prelude::*;
+mod logger;
+mod input;
+mod collector;
+mod processor;
+mod inference;
+mod output;
+mod config;
+use config::Config;
+
+//use tokio::prelude::*;
 use log::{info, debug};
 
-mod config;
-mod logger;
-use config::Config;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::thread;
+use std::time;
+
+type StopFlag = Arc<AtomicBool>;
 
 #[tokio::main]
 async fn main() {
@@ -13,30 +25,24 @@ async fn main() {
 
     // init logger
     logger::init(cfg_inst.clone());
-    // now can log
+    // now logging is available
     info!("Hello, banshee");
 
-    // print target peers to connect to
-    let peers = cfg_inst.peers();
-    for p in peers {
-        info!("Connect to {}", p);
-        // todo: start tokio client
-    }
- 
-    // run input
-    info!("start input");
+    let stop_flag: StopFlag = Arc::new(AtomicBool::new(false));
 
-    // run collector
-    info!("start collector");
+    let submodules = async move {
+        input::run(cfg_inst.clone(), stop_flag.clone()).await;
+        collector::run(cfg_inst.clone(), stop_flag.clone()).await;
+        processor::run(cfg_inst.clone(), stop_flag.clone()).await;
+        inference::run(cfg_inst.clone(), stop_flag.clone()).await;
+        output::run(cfg_inst.clone(), stop_flag.clone()).await;
 
-    // run processor
-    info!("start processor");
+        // imitate 5 sec work:
+        thread::sleep(time::Duration::from_secs(15));
+        stop_flag.store(true, Ordering::SeqCst);
+    };
 
-    // run inference
-    info!("start inference");
+    submodules.await;
 
-    // run output
-    info!("start otput");
-
-    info!("exit");
+    info!("exit main");
 }

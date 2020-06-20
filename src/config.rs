@@ -5,13 +5,13 @@ use std::sync::{Arc, RwLock};
 mod core;
 mod endpoint;
 use self::core::ConfigCore;
-use endpoint::Endpoint;
 
 pub struct Config {
     core: RwLock<ConfigCore>
 }
 
 pub type SharedConfig = Arc<Config>;
+pub type Endpoint = endpoint::Endpoint;
 
 impl Config{
 
