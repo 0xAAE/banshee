@@ -1,3 +1,14 @@
+//! Обеспечивает централизованный потокобезопасный доступ ко всем настройкам программы из всех остальных компонентов.
+//! 
+//! Задачи:
+//! *  построить конфигурацию при запуске программы
+//! *  обновлять конфигурацию с заданным периодом в процессе работы
+//! *  собирать конфигурацию из источников (в порядке уменьшения приоритета):
+//!       * командная строка
+//!       * конфиг. файл
+//!       * переменные окружения
+//!       * значения по-умолчанию, заданы в коде программы
+
 use clap::{Arg, App, ArgMatches};
 use log::LevelFilter;
 use std::sync::{Arc, RwLock};
@@ -15,6 +26,8 @@ pub type Endpoint = endpoint::Endpoint;
 
 impl Config{
 
+    /// Создает копируемый между всеми компонентами приложения указатель на объект конфигурации.
+    /// Создание объекта конфигурации должно предшествовать созданию всех остальных подмодулей
     pub fn new() -> SharedConfig {
         let args = init_args();
         let pathname = args.value_of("config").unwrap_or("banshee.ini");
@@ -28,16 +41,19 @@ impl Config{
         })
     }
 
+    /// Список точек подключения к копиям системы сопряжения для получения входных данных
     pub fn peers(&self) -> Vec<Endpoint> {
         let c = self.core.read().unwrap();
         c.peers().clone()
     }
 
+    /// Заданный в настройках уровень детализации логирования в консоль
     pub fn log_lvl_console(&self) -> LevelFilter {
         // todo: obtain value from config file
         LevelFilter::Info
     }
 
+    /// Заданный в настройках уровень детализации логирования в файлы
     pub fn log_lvl_file(&self) -> LevelFilter {
         // todo: obtain value from config file
         LevelFilter::Debug

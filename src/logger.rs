@@ -1,3 +1,10 @@
+//! Обеспечивает возможность централизованно управляемого логирования из любого места в коде программы при помощи макросов error!, warn!, info!, debug!, trace!
+//! 
+//! Задачи:
+//! *  анализировать конфигурацию программы на предмет заданного уровня логирования
+//! *  различать уровни логирования в файл (или системный журнал)и в консоль (stdout)
+//! *  реализовать логирование
+
 use log4rs::append::console::ConsoleAppender;
 use log4rs::append::rolling_file::policy::compound::roll::fixed_window::FixedWindowRoller;
 use log4rs::append::rolling_file::policy::compound::trigger::size::SizeTrigger;
@@ -9,6 +16,9 @@ use log4rs::filter::threshold::ThresholdFilter;
 
 use crate::config::SharedConfig;
 
+/// Инициализирует подсистему логирования в соответствии с настройками в конфигурации.
+/// После инициализации можно в любом метсе программы использовать макросы error!, warn!, info!, debug!, trace!
+/// Подсистема должна инициализироваться сразу после получения доступа к конфигурации приложения
 pub fn init(conf: SharedConfig) {
     let lvl_console = conf.log_lvl_console();
     let lvl_file = conf.log_lvl_file();

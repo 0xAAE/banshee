@@ -1,3 +1,4 @@
+/// Подготовленный к расчетуц результата сэмпл
 pub enum FinalSample {
     Stop,
     Data {
