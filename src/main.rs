@@ -26,7 +26,7 @@ async fn main() {
 
     let subsystems = async move {
         // channel to control input is a oneshot
-        let (mut tx_stop, rx_stop) = oneshot::channel();
+        let (tx_stop, rx_stop) = oneshot::channel();
         
         // other channels are universal        
         // channel to pass fragments: input --> collector

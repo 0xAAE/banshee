@@ -2,7 +2,7 @@ use crate::config::SharedConfig;
 use crate::data::StoredResult;
 
 use log::{error, info};
-use tokio::sync::mpsc::{Sender, Receiver};
+use tokio::sync::mpsc::Receiver;
 
 pub async fn run(_cfg: SharedConfig, mut rx_rslt: Receiver<StoredResult>) {
     info!("start output");

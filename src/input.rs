@@ -1,7 +1,7 @@
 use crate::config::SharedConfig;
 use crate::data::Fragment;
 
-use log::{error, info};
+use log::info;
 use tokio::sync::oneshot;
 use tokio::sync::mpsc::Sender;
 
