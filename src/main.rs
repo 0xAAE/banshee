@@ -69,7 +69,7 @@ async fn main() {
         inference::run(cfg_inst.clone(), rx_smpl, tx_rslt.clone()).await;
         output::run(cfg_inst.clone(), rx_rslt).await;
 
-        // launch ctrl-c handler
+        // launch stop handler, <Enter> in Windows, <Ctrl+C> in others
         let signals = platform::get_system_signals();
         tokio::spawn(async move {
             for _ in signals.forever() {
@@ -85,15 +85,47 @@ async fn main() {
         }).await.unwrap();
     };
 
-    println!("Banshee has started, press Ctrl+C to stop");
     subsystems.await;
 }
 
+/// Non-windows реализация обработчика Ctrl-C (SIGINT)
 #[cfg(not(windows))]
 mod platform {
     use signal_hook::{iterator::Signals, SIGINT};
     
+    /// Возвращает способный итерироваться (т.е. срабатывать) по каждому сигналу SIGINT объект (non-Windows)
+    /// Срабатывание реализовано в виде итератора, который возвращает одно значение на каждый сигнал
     pub fn get_system_signals() -> Signals {
+        println!("Banshee has started, press Ctrl+C to stop");
         Signals::new(&[SIGINT]).unwrap()
+    }
+}
+
+/// Совместимая с обработчиком Ctrl-C (SIGINT) для linux реализация для windows, реагируюшая на <Enter>
+#[cfg(windows)]
+mod platform {
+    use std::io::BufRead;
+
+    /// Способный однократно срабатывать по нажатию Enter объект (Windows only).
+    pub struct Signals {}
+
+    impl Signals {
+
+        /// Возвращает разовый итератор, срабатывающий по нажатию Enter в консоли запущенной программы
+        pub fn forever(&self) -> std::iter::Once<()> {
+            println!("Banshee has started, press Enter to stop");
+            let stdin = std::io::stdin();
+            for _ in stdin.lock().lines() {
+                break;
+            }
+            std::iter::once(())
+        }
+
+    }
+
+    /// Возвращает способный итерироваться (т.е. срабатывать) по нажатию <Enter> объект (for Windows only)
+    /// Срабатывание реализовано в виде разового итератора, который возвращает значение по нажатию Enter
+    pub fn get_system_signals() -> Signals {
+        Signals {}
     }
 }
