@@ -11,4 +11,5 @@ tokio = { version = "0.2", features = ["full"] }
 clap = "2.33"
 log = "0.4"
 log4rs = { version = "0.9.0", features = ["console_appender", "rolling_file_appender", "compound_policy", "fixed_window_roller", "size_trigger", "pattern_encoder", "threshold_filter"] }
+#[cfg(not(windows))]
 signal-hook = "0.1"

@@ -29,6 +29,7 @@ use config::Config;
 
 use tokio::sync::oneshot;
 use tokio::sync::mpsc::channel;
+#[cfg(not(windows))]
 use signal_hook::{iterator::Signals, SIGINT};
 
 /// Осуществляет предварительную настройку и запуск подсистем приложения
@@ -89,4 +90,3 @@ async fn main() {
     println!("Banshee has started, press Ctrl+C to stop");
     subsystems.await;
 }
-
