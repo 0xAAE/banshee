@@ -29,8 +29,6 @@ use config::Config;
 
 use tokio::sync::oneshot;
 use tokio::sync::mpsc::channel;
-#[cfg(not(windows))]
-use signal_hook::{iterator::Signals, SIGINT};
 
 /// Осуществляет предварительную настройку и запуск подсистем приложения
 /// *  создание подмодуля конфигурации
@@ -72,10 +70,10 @@ async fn main() {
         output::run(cfg_inst.clone(), rx_rslt).await;
 
         // launch ctrl-c handler
-        let signals = Signals::new(&[SIGINT]).unwrap();
+        let signals = platform::get_system_signals();
         tokio::spawn(async move {
             for _ in signals.forever() {
-                println!("Trying to stop banshee!");
+                println!("\nTrying to stop banshee!\n");
                 // send stop signal to all channels
                 let _ = tx_stop.send(());                               // stops input
                 let _ = tx_frag.send(data::Fragment::Stop).await;       // stops collector
@@ -89,4 +87,13 @@ async fn main() {
 
     println!("Banshee has started, press Ctrl+C to stop");
     subsystems.await;
+}
+
+#[cfg(not(windows))]
+mod platform {
+    use signal_hook::{iterator::Signals, SIGINT};
+    
+    pub fn get_system_signals() -> Signals {
+        Signals::new(&[SIGINT]).unwrap()
+    }
 }
